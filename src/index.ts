@@ -162,46 +162,33 @@ export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
 		const url = new URL(request.url);
 
+		// 添加 CORS 响应头
+		const corsHeaders = {
+			'Access-Control-Allow-Origin': '*',
+			'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+			'Access-Control-Allow-Headers': 'Content-Type, Authorization, Origin, Accept',
+			'Access-Control-Max-Age': '86400',
+		};
+
 		// 处理 OPTIONS 预检请求
 		if (request.method === 'OPTIONS') {
 			return new Response(null, {
-				headers: {
-					'Access-Control-Allow-Origin': '*',
-					'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-					'Access-Control-Allow-Headers': 'Content-Type, Authorization, Origin, Accept',
-					'Access-Control-Max-Age': '86400',
-				},
-				status: 204,
+				headers: corsHeaders
 			});
 		}
 
+		// 为所有响应添加 CORS 头
 		const addCorsHeaders = (response: Response) => {
-			// 添加 CORS 响应头
-			const headers = new Headers(response.headers);
-			headers.set('Access-Control-Allow-Origin', '*');
-			headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-			headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Origin, Accept');
-			headers.set('Access-Control-Max-Age', '86400');
-
+			const newHeaders = new Headers(response.headers);
+			Object.entries(corsHeaders).forEach(([key, value]) => {
+				newHeaders.set(key, value);
+			});
 			return new Response(response.body, {
 				status: response.status,
 				statusText: response.statusText,
-				headers
+				headers: newHeaders,
 			});
 		};
-
-		// 为所有响应添加 CORS 头
-		// const addCorsHeaders = (response: Response) => {
-		// 	const newHeaders = new Headers(response.headers);
-		// 	Object.entries(corsHeaders).forEach(([key, value]) => {
-		// 		newHeaders.set(key, value);
-		// 	});
-		// 	return new Response(response.body, {
-		// 		status: response.status,
-		// 		statusText: response.statusText,
-		// 		headers: newHeaders,
-		// 	});
-		// };
 
 		// 提供 HTML 页面
 		if (url.pathname === "/" || url.pathname === "") {
